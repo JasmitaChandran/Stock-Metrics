@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Stock Metrics - Order Service
+  version: 1.0.0
+servers:
+  - url: https://api.stock-metrics.local/orders
+paths:
+  /orders:
+    post:
+      summary: Place order
+      security:
+        - oauth2: ["orders.write"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Order accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /orders/{id}:
+    get:
+      summary: Get order by id
+      security:
+        - oauth2: ["orders.read"]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /users/{userId}/orders:
+    get:
+      summary: Orders by user
+      security:
+        - oauth2: ["orders.read"]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open,filled,canceled]
+      responses:
+        '200':
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.stock-metrics.local/auth
+          tokenUrl: https://auth.stock-metrics.local/token
+          scopes:
+            orders.read: Read orders
+            orders.write: Create orders
+  schemas:
+    OrderRequest:
+      type: object
+      required: [userId, symbol, side, type, quantity]
+      properties:
+        userId:
+          type: string
+        symbol:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell]
+        type:
+          type: string
+          enum: [market, limit]
+        price:
+          type: number
+        quantity:
+          type: number
+        clientOrderId:
+          type: string
+    OrderResponse:
+      allOf:
+        - $ref: '#/components/schemas/OrderRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+            status:
+              type: string
+              enum: [open, filled, canceled]
+            createdAt:
+              type: string
+              format: date-time

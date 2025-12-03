@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: Stock Metrics - Portfolio Service
+  version: 1.0.0
+servers:
+  - url: https://api.stock-metrics.local/portfolio
+paths:
+  /users/{userId}/portfolio:
+    get:
+      summary: Get aggregated portfolio
+      security:
+        - oauth2: ["portfolio.read"]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Portfolio snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portfolio'
+  /users/{userId}/positions:
+    get:
+      summary: Get open positions
+      security:
+        - oauth2: ["portfolio.read"]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Position'
+  /simulate/settle:
+    post:
+      summary: Settle simulated trades
+      security:
+        - oauth2: ["portfolio.write"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tradeIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Settlement complete
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.stock-metrics.local/auth
+          tokenUrl: https://auth.stock-metrics.local/token
+          scopes:
+            portfolio.read: Read portfolio
+            portfolio.write: Settle trades
+  schemas:
+    Position:
+      type: object
+      properties:
+        symbol:
+          type: string
+        qty:
+          type: number
+        avgPrice:
+          type: number
+        realisedPl:
+          type: number
+        unrealisedPl:
+          type: number
+    Portfolio:
+      type: object
+      properties:
+        userId:
+          type: string
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Position'
+        equity:
+          type: number
+        cash:
+          type: number

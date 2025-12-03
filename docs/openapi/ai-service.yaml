@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+  title: Stock Metrics - AI Service
+  version: 1.0.0
+servers:
+  - url: https://api.stock-metrics.local/ai
+paths:
+  /sentiment:
+    post:
+      summary: Analyze sentiment using local LLM
+      security:
+        - oauth2: ["ai.read"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  example: "Stock XYZ beats earnings expectations"
+      responses:
+        '200':
+          description: Sentiment result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  label:
+                    type: string
+                    example: positive
+                  confidence:
+                    type: number
+                    example: 0.91
+  /predict:
+    post:
+      summary: Predict short-term price direction
+      security:
+        - oauth2: ["ai.read"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                symbol:
+                  type: string
+                timeframe:
+                  type: string
+                  example: 1d
+                features:
+                  type: object
+                  additionalProperties:
+                    type: number
+      responses:
+        '202':
+          description: Prediction scheduled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.stock-metrics.local/auth
+          tokenUrl: https://auth.stock-metrics.local/token
+          scopes:
+            ai.read: Call AI endpoints

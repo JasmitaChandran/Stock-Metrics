@@ -1,0 +1,31 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: marketdata-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  data:
+    mongodb:
+      database: stockmetrics
+      uri: mongodb://localhost:27017/stockmetrics
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+resilience4j:
+  circuitbreaker:
+    instances:
+      marketdata:
+        slidingWindowSize: 5
+        minimumNumberOfCalls: 2
+        waitDurationInOpenState: 5s
+marketdata:
+  kafka:
+    topic-pattern: prices.%s
+  upstream:
+    base-url: http://localhost:9561
