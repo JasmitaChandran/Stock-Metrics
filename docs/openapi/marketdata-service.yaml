@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: Stock Metrics - Market Data Service
+  version: 1.0.0
+servers:
+  - url: https://api.stock-metrics.local/marketdata
+paths:
+  /symbols:
+    post:
+      summary: Add a symbol to watchlist
+      security:
+        - oauth2: ["marketdata.write"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                symbol:
+                  type: string
+                  example: AAPL
+      responses:
+        '201':
+          description: Symbol registered
+  /{symbol}/history:
+    get:
+      summary: Get historical data
+      security:
+        - oauth2: ["marketdata.read"]
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: end
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: interval
+          in: query
+          schema:
+            type: string
+            enum: [1m,1h,1d]
+            default: 1d
+      responses:
+        '200':
+          description: Historical candles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Candle'
+  /{symbol}/quote:
+    get:
+      summary: Latest canonical quote
+      security:
+        - oauth2: ["marketdata.read"]
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Quote
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.stock-metrics.local/auth
+          tokenUrl: https://auth.stock-metrics.local/token
+          scopes:
+            marketdata.read: Read quotes
+            marketdata.write: Manage symbols
+  schemas:
+    Candle:
+      type: object
+      properties:
+        symbol:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        open:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        close:
+          type: number
+        volume:
+          type: number
+    Quote:
+      type: object
+      properties:
+        symbol:
+          type: string
+        last:
+          type: number
+        bid:
+          type: number
+        ask:
+          type: number
+        ts:
+          type: string
+          format: date-time
